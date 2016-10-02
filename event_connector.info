@@ -1,0 +1,4 @@
+name = Event Connector
+description = Event connector to send Kyyti events to Kymenlaakso event calendar.
+package = Kyyti
+core = 7.x

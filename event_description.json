@@ -1,0 +1,111 @@
+{
+	"apikey" : "...your api key...",
+	"languages" : ["fi","en"],
+	"test" : "true",
+	"data" : [
+		{
+			"basicInfo" : {
+				"title" : {
+					"fi" : "Esimerkki Otsikko",
+					"en" : "Example title"
+				},
+				"published" : {
+					"fi" : "1",
+					"en" : "1"
+				},
+				"description" : {
+					"fi" : "Esimerkki tapahtuma",
+					"en" : "Example event"
+				},
+				"price" : "10",
+				"event_is_free" : "0",
+				"event_is_accessible" : "1",
+				"event_is_all_ages" : "1",
+				"buy_ticket_link" : "buy_ticket_link",
+				"buy_ticket_text" : {
+					"fi" : "http://google.com",
+					"en" : "http://google.com"
+				},
+				"categories" : "1,2",
+				"tourist_areas" : "1,2",
+				"target_groups" : "1,2"
+			},
+			"contactInformation" : {
+				"organizer_name" : "Example organizer",
+				"phone" : "1234567",
+				"email" : "example@example.com",
+				"street_address" : "Example street",
+				"zip_code" : "80110",
+				"city" : "JOENSUU",
+				"map" : {
+					"lat":"62.603494526536934",
+					"lng":"29.771407378369076"
+				},
+				"homepage" : "http://google.com",
+				"event_location" : {
+					"fi" : "Satunnainen esimerkkisijainti",
+					"en" : "Random event location"
+				}
+			},
+			"dates" : [{
+					"start_datetime" : "2016-12-10",
+					"event_repeat" : "monthly",
+					"repeat_amount" : "2",
+					"end_datetime" : "2017-01-01"
+				}
+			],
+			"images" : [{
+					"image" : {
+						"fi" : {
+							"data" : "iVBORw0KGgoAAAANSUhEUgAAAGQAAAAeAQMAAADglSmwAAAABlBMVEX///8AAP94wDzzAAAAW0lEQVQYlWNgIBr8AxGMBxgMwLwDUBIrL7F/2tkDBz5AeH+MJW7nJRycAZWTY7idY3CYB8rjkQfx/sDkDEA8mCnGhiB9PVDbE+fdzj344IcB3D08KK5D5Q0rAAAP8STZfzqOdwAAAABJRU5ErkJggg==",
+							"filename" : "example.png"
+						},
+						"en" : {
+							"data" : "iVBORw0KGgoAAAANSUhEUgAAAGQAAAAeAQMAAADglSmwAAAABlBMVEX///8AAP94wDzzAAAAW0lEQVQYlWNgIBr8AxGMBxgMwLwDUBIrL7F/2tkDBz5AeH+MJW7nJRycAZWTY7idY3CYB8rjkQfx/sDkDEA8mCnGhiB9PVDbE+fdzj344IcB3D08KK5D5Q0rAAAP8STZfzqOdwAAAABJRU5ErkJggg==",
+							"filename" : "example.png"
+						}
+					},
+					"alt_text" : {
+						"fi" : "Esimerkkikuva",
+						"en" : "Example image"
+					}
+				}
+			],
+			"videos" : [{
+					"video" : {
+						"fi" : "html embed video",
+						"en" : "html embed video"
+					}
+				}
+			],
+			"links" : [{
+					"link_title" : {
+						"fi" : "Esimerkki linkki",
+						"en" : "Example link"
+					},
+					"link_url" : {
+						"fi" : "http://google.com",
+						"en" : "http://google.com"
+					}
+				}
+			],
+			"attachments" : [{
+					"event_file_title" : {
+						"fi" : "event_file_title",
+						"en" : "event_file_title"
+					},
+					"event_file" : {
+						"fi" : {
+							"data" : "JVBERi0xLjMgCjEgMCBvYmoKPDwKL1BhZ2VzIDIgMCBSCi9UeXBlIC9DYXRhbG9nCj4+CmVuZG9iagoyIDAgb2JqCjw8Ci9UeXBlIC9QYWdlcwovS2lkcyBbIDMgMCBSIF0KL0NvdW50IDEKPj4KZW5kb2JqCjMgMCBvYmoKPDwKL1R5cGUgL1BhZ2UKL1BhcmVudCAyIDAgUgovUmVzb3VyY2VzIDw8Ci9YT2JqZWN0IDw8IC9JbTAgOCAwIFIgPj4KL1Byb2NTZXQgNiAwIFIgPj4KL01lZGlhQm94IFswIDAgMTAwIDMwXQovQ3JvcEJveCBbMCAwIDEwMCAzMF0KL0NvbnRlbnRzIDQgMCBSCi9UaHVtYiAxMSAwIFIKPj4KZW5kb2JqCjQgMCBvYmoKPDwKL0xlbmd0aCA1IDAgUgo+PgpzdHJlYW0KcQoxMDAgMCAwIDMwIDAgMCBjbQovSW0wIERvClEKCmVuZHN0cmVhbQplbmRvYmoKNSAwIG9iagozMAplbmRvYmoKNiAwIG9iagpbIC9QREYgL1RleHQgL0ltYWdlSSBdCmVuZG9iago3IDAgb2JqCjw8Cj4+CmVuZG9iago4IDAgb2JqCjw8Ci9UeXBlIC9YT2JqZWN0Ci9TdWJ0eXBlIC9JbWFnZQovTmFtZSAvSW0wCi9GaWx0ZXIgWyAvRmxhdGVEZWNvZGUgXQovV2lkdGggMTAwCi9IZWlnaHQgMzAKL0NvbG9yU3BhY2UgMTAgMCBSCi9CaXRzUGVyQ29tcG9uZW50IDgKL0xlbmd0aCA5IDAgUgo+PgpzdHJlYW0KeNrtUosKwCAIzP//6bEevjZSYbAN7ggzKfW8WgOyoIHC9WsoflTt6eM1htPtnB6dp+6QzEh2H9nVWLdnNjFqEadSm43kuBvtbQ1H9MZm58uNDW7bGpZ/lQe/DHmUNecRL9lDPdJ/kklr4R0J9a9IO1nNc308keX9GgAAAMC/cADQ/gDzCmVuZHN0cmVhbQplbmRvYmoKOSAwIG9iagoxMzIKZW5kb2JqCjEwIDAgb2JqClsgL0luZGV4ZWQgL0RldmljZVJHQiAxIDEzIDAgUiBdCmVuZG9iagoxMSAwIG9iago8PAovRmlsdGVyIFsgL0ZsYXRlRGVjb2RlIF0KL1dpZHRoIDEwMAovSGVpZ2h0IDMwCi9Db2xvclNwYWNlIDEwIDAgUgovQml0c1BlckNvbXBvbmVudCA4Ci9MZW5ndGggMTIgMCBSCj4+CnN0cmVhbQp42u1SiwrAIAjM///psR6+NlJhsA3uCDMp9bxaA7KggcL1ayh+VO3p4zWG0+2cHp2n7pDMSHYf2dVYt2c2MWoRp1KbjeS4G+1tDUf0xmbny40Nbtsaln+VB78MeZQ15xEv2UM90n+SSWvhHQn1r0g7Wc1zfTyR5f0aAAAAwL9wAND+APMKZW5kc3RyZWFtCmVuZG9iagoxMiAwIG9iagoxMzIKZW5kb2JqCjEzIDAgb2JqCjw8Ci9MZW5ndGggMTQgMCBSCj4+CnN0cmVhbQr///8AAP8KZW5kc3RyZWFtCmVuZG9iagoxNCAwIG9iago2CmVuZG9iagoxNSAwIG9iago8PAo+PgplbmRvYmoKMTYgMCBvYmoKNgplbmRvYmoKMTcgMCBvYmoKPDwKL1RpdGxlIChleGFtcGxlKQovQ3JlYXRpb25EYXRlIChEOjIwMTYwOTI3MTQxMDMwKQovTW9kRGF0ZSAoRDoyMDE2MDkyNzE0MTAzMCkKL1Byb2R1Y2VyIChJbWFnZU1hZ2ljayA2LjkuMS0yIFExNiB4NjQgMjAxNS0wNC0xNCBodHRwOi8vd3d3LmltYWdlbWFnaWNrLm9yZykKPj4KZW5kb2JqCnhyZWYKMCAxOAowMDAwMDAwMDAwIDY1NTM1IGYgCjAwMDAwMDAwMTAgMDAwMDAgbiAKMDAwMDAwMDA1OSAwMDAwMCBuIAowMDAwMDAwMTE4IDAwMDAwIG4gCjAwMDAwMDAyOTggMDAwMDAgbiAKMDAwMDAwMDM4MSAwMDAwMCBuIAowMDAwMDAwMzk5IDAwMDAwIG4gCjAwMDAwMDA0MzcgMDAwMDAgbiAKMDAwMDAwMDQ1OCAwMDAwMCBuIAowMDAwMDAwNzcxIDAwMDAwIG4gCjAwMDAwMDA3OTAgMDAwMDAgbiAKMDAwMDAwMDgzOSAwMDAwMCBuIAowMDAwMDAxMTEyIDAwMDAwIG4gCjAwMDAwMDExMzIgMDAwMDAgbiAKMDAwMDAwMTE5MyAwMDAwMCBuIAowMDAwMDAxMjExIDAwMDAwIG4gCjAwMDAwMDEyMzMgMDAwMDAgbiAKMDAwMDAwMTI1MSAwMDAwMCBuIAp0cmFpbGVyCjw8Ci9TaXplIDE4Ci9JbmZvIDE3IDAgUgovUm9vdCAxIDAgUgovSUQgWzxlMjAwMDYzZmUxZGNjMjhmNWU2YTM5ZTJkYWMwMTQ4Y2VlZDlhNjI1YjM5MTU2ZjdlN2RjODc3NTkyY2Q3ODhkPiA8ZTIwMDA2M2ZlMWRjYzI4ZjVlNmEzOWUyZGFjMDE0OGNlZWQ5YTYyNWIzOTE1NmY3ZTdkYzg3NzU5MmNkNzg4ZD5dCj4+CnN0YXJ0eHJlZgoxNDI5CiUlRU9GCg==",
+							"filename" : "Example.pdf"
+						},
+						"en" : {
+							"data" : "JVBERi0xLjMgCjEgMCBvYmoKPDwKL1BhZ2VzIDIgMCBSCi9UeXBlIC9DYXRhbG9nCj4+CmVuZG9iagoyIDAgb2JqCjw8Ci9UeXBlIC9QYWdlcwovS2lkcyBbIDMgMCBSIF0KL0NvdW50IDEKPj4KZW5kb2JqCjMgMCBvYmoKPDwKL1R5cGUgL1BhZ2UKL1BhcmVudCAyIDAgUgovUmVzb3VyY2VzIDw8Ci9YT2JqZWN0IDw8IC9JbTAgOCAwIFIgPj4KL1Byb2NTZXQgNiAwIFIgPj4KL01lZGlhQm94IFswIDAgMTAwIDMwXQovQ3JvcEJveCBbMCAwIDEwMCAzMF0KL0NvbnRlbnRzIDQgMCBSCi9UaHVtYiAxMSAwIFIKPj4KZW5kb2JqCjQgMCBvYmoKPDwKL0xlbmd0aCA1IDAgUgo+PgpzdHJlYW0KcQoxMDAgMCAwIDMwIDAgMCBjbQovSW0wIERvClEKCmVuZHN0cmVhbQplbmRvYmoKNSAwIG9iagozMAplbmRvYmoKNiAwIG9iagpbIC9QREYgL1RleHQgL0ltYWdlSSBdCmVuZG9iago3IDAgb2JqCjw8Cj4+CmVuZG9iago4IDAgb2JqCjw8Ci9UeXBlIC9YT2JqZWN0Ci9TdWJ0eXBlIC9JbWFnZQovTmFtZSAvSW0wCi9GaWx0ZXIgWyAvRmxhdGVEZWNvZGUgXQovV2lkdGggMTAwCi9IZWlnaHQgMzAKL0NvbG9yU3BhY2UgMTAgMCBSCi9CaXRzUGVyQ29tcG9uZW50IDgKL0xlbmd0aCA5IDAgUgo+PgpzdHJlYW0KeNrtUosKwCAIzP//6bEevjZSYbAN7ggzKfW8WgOyoIHC9WsoflTt6eM1htPtnB6dp+6QzEh2H9nVWLdnNjFqEadSm43kuBvtbQ1H9MZm58uNDW7bGpZ/lQe/DHmUNecRL9lDPdJ/kklr4R0J9a9IO1nNc308keX9GgAAAMC/cADQ/gDzCmVuZHN0cmVhbQplbmRvYmoKOSAwIG9iagoxMzIKZW5kb2JqCjEwIDAgb2JqClsgL0luZGV4ZWQgL0RldmljZVJHQiAxIDEzIDAgUiBdCmVuZG9iagoxMSAwIG9iago8PAovRmlsdGVyIFsgL0ZsYXRlRGVjb2RlIF0KL1dpZHRoIDEwMAovSGVpZ2h0IDMwCi9Db2xvclNwYWNlIDEwIDAgUgovQml0c1BlckNvbXBvbmVudCA4Ci9MZW5ndGggMTIgMCBSCj4+CnN0cmVhbQp42u1SiwrAIAjM///psR6+NlJhsA3uCDMp9bxaA7KggcL1ayh+VO3p4zWG0+2cHp2n7pDMSHYf2dVYt2c2MWoRp1KbjeS4G+1tDUf0xmbny40Nbtsaln+VB78MeZQ15xEv2UM90n+SSWvhHQn1r0g7Wc1zfTyR5f0aAAAAwL9wAND+APMKZW5kc3RyZWFtCmVuZG9iagoxMiAwIG9iagoxMzIKZW5kb2JqCjEzIDAgb2JqCjw8Ci9MZW5ndGggMTQgMCBSCj4+CnN0cmVhbQr///8AAP8KZW5kc3RyZWFtCmVuZG9iagoxNCAwIG9iago2CmVuZG9iagoxNSAwIG9iago8PAo+PgplbmRvYmoKMTYgMCBvYmoKNgplbmRvYmoKMTcgMCBvYmoKPDwKL1RpdGxlIChleGFtcGxlKQovQ3JlYXRpb25EYXRlIChEOjIwMTYwOTI3MTQxMDMwKQovTW9kRGF0ZSAoRDoyMDE2MDkyNzE0MTAzMCkKL1Byb2R1Y2VyIChJbWFnZU1hZ2ljayA2LjkuMS0yIFExNiB4NjQgMjAxNS0wNC0xNCBodHRwOi8vd3d3LmltYWdlbWFnaWNrLm9yZykKPj4KZW5kb2JqCnhyZWYKMCAxOAowMDAwMDAwMDAwIDY1NTM1IGYgCjAwMDAwMDAwMTAgMDAwMDAgbiAKMDAwMDAwMDA1OSAwMDAwMCBuIAowMDAwMDAwMTE4IDAwMDAwIG4gCjAwMDAwMDAyOTggMDAwMDAgbiAKMDAwMDAwMDM4MSAwMDAwMCBuIAowMDAwMDAwMzk5IDAwMDAwIG4gCjAwMDAwMDA0MzcgMDAwMDAgbiAKMDAwMDAwMDQ1OCAwMDAwMCBuIAowMDAwMDAwNzcxIDAwMDAwIG4gCjAwMDAwMDA3OTAgMDAwMDAgbiAKMDAwMDAwMDgzOSAwMDAwMCBuIAowMDAwMDAxMTEyIDAwMDAwIG4gCjAwMDAwMDExMzIgMDAwMDAgbiAKMDAwMDAwMTE5MyAwMDAwMCBuIAowMDAwMDAxMjExIDAwMDAwIG4gCjAwMDAwMDEyMzMgMDAwMDAgbiAKMDAwMDAwMTI1MSAwMDAwMCBuIAp0cmFpbGVyCjw8Ci9TaXplIDE4Ci9JbmZvIDE3IDAgUgovUm9vdCAxIDAgUgovSUQgWzxlMjAwMDYzZmUxZGNjMjhmNWU2YTM5ZTJkYWMwMTQ4Y2VlZDlhNjI1YjM5MTU2ZjdlN2RjODc3NTkyY2Q3ODhkPiA8ZTIwMDA2M2ZlMWRjYzI4ZjVlNmEzOWUyZGFjMDE0OGNlZWQ5YTYyNWIzOTE1NmY3ZTdkYzg3NzU5MmNkNzg4ZD5dCj4+CnN0YXJ0eHJlZgoxNDI5CiUlRU9GCg==",
+							"filename" : "Example.pdf"
+						}
+					}
+				}
+			]
+		}
+	]
+}
