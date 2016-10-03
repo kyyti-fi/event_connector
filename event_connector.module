@@ -76,7 +76,18 @@ function event_connector_mapping() {
   );
 
   if ($our_event_type != '0') {
-    event_connector_field_mappings($form);
+
+    $fields = field_info_instances('node', $our_event_type);
+    dpm($types);
+    dpm($fields);
+    $items[0] = t('No mapping');
+    $items['title'] = $types[$our_event_type]->title_label;
+    foreach ($fields as $key => $value) {
+      $items[$key] = $value['label'];
+    }
+    $items['published'] = t('Published');
+
+    event_connector_field_mappings($form, $items);
   }
 
   $form['submit'] = array(
@@ -90,7 +101,7 @@ function event_connector_mapping() {
 /**
  * Filed mappings form.
  */
-function event_connector_field_mappings(&$form) {
+function event_connector_field_mappings(&$form, $items) {
   $filename = drupal_get_path('module', 'event_connector');
   $filename .= '/event_description.json';
 
@@ -98,7 +109,6 @@ function event_connector_field_mappings(&$form) {
     $json = file_get_contents($filename);
     $event_data = json_decode($json);
     dpm($event_data, 'Event');
-
     foreach ($event_data as $key => $item) {
       if ($key != 'data') {
         continue;
@@ -106,20 +116,22 @@ function event_connector_field_mappings(&$form) {
       $fields = current($item);
 
       foreach ($fields as $idx => $value) {
-
+        $title = ucfirst(str_replace('_', ' ', $idx));
         $form['level_' . $idx] = array(
           '#type' => 'fieldset',
-          '#title' => $idx,
+          '#title' => $title,
           '#collapsible' => TRUE,
           '#collapsed' => FALSE,
         );
 
         if (is_object($value)) {
           foreach ($value as $caption => $field) {
+            $title = ucfirst(str_replace('_', ' ', $caption));
             $form['level_' . $idx]['event_connector_' . $caption] = array(
-              '#type' => 'textfield',
-              '#title' => $caption,
+              '#type' => 'select',
+              '#title' => $title,
               '#default_value' => '',
+              '#options' => $items,
             );
           }
         }
@@ -127,9 +139,10 @@ function event_connector_field_mappings(&$form) {
           $arr_value = current($value);
           foreach ($arr_value as $caption => $field) {
             $form['level_' . $idx]['event_connector_' . $caption] = array(
-              '#type' => 'textfield',
+              '#type' => 'select',
               '#title' => $caption,
               '#default_value' => '',
+              '#options' => $items,
             );
             $current_item = current($field);
             if (is_object($current_item)) {
@@ -140,10 +153,12 @@ function event_connector_field_mappings(&$form) {
               );
 
               foreach ($current_item as $a => $b) {
+                $title = ucfirst(str_replace('_', ' ', $a));
                 $form['level_' . $idx]['sub_' . $caption]['event_connector_' . $a] = array(
-                  '#type' => 'textfield',
-                  '#title' => $a,
+                  '#type' => 'select',
+                  '#title' => $title,
                   '#default_value' => '',
+                  '#options' => $items,
                 );
               }
             }
