@@ -78,16 +78,32 @@ function event_connector_mapping() {
   if ($our_event_type != '0') {
 
     $fields = field_info_instances('node', $our_event_type);
-    dpm($types);
-    dpm($fields);
+    // dpm($types);
+    // dpm($fields, 'fields');
     $items[0] = t('No mapping');
     $items['title'] = $types[$our_event_type]->title_label;
     foreach ($fields as $key => $value) {
-      $items[$key] = $value['label'];
+      // dpm($key);
+      if ($value['widget']['type'] == 'date_popup') {
+        $items[$key . '-value-date'] = $value['label'] . ':value';
+        $items[$key . '-value2-date'] = $value['label'] . ':value2';
+      }
+      elseif ($value['widget']['module'] == 'taxonomy') {
+        $items[$key . '-tid-term'] = $value['label'];
+      }
+      elseif ($value['widget']['module'] == 'image') {
+        $items[$key . '-fid-image'] = $value['label'];
+        $items[$key . '-alt'] = $value['label'] . ':alt';
+      }
+      else {
+        $items[$key] = $value['label'];
+      }
+      //dpm($value, 'value');
     }
     $items['published'] = t('Published');
 
-    event_connector_field_mappings($form, $items);
+    $defs = variable_get('event_connector_mappings', array());
+    event_connector_field_mappings($form, $items, $defs);
   }
 
   $form['submit'] = array(
@@ -99,16 +115,44 @@ function event_connector_mapping() {
 }
 
 /**
+ * Implements hook_submit().
+ */
+function event_connector_mapping_submit($form, &$form_state) {
+  $values = $form_state['values'];
+  if ($values['op'] == $values['submit']) {
+    $res = array();
+    foreach ($values as $level => $arr) {
+      if ($level == 'event_connector_type') {
+        variable_set('event_connector_type', $arr);
+        continue;
+      }
+      if (strpos($level, 'level_') === FALSE) {
+        continue;
+      }
+      $res_inner = array();
+      foreach ($arr as $key => $value) {
+        if (strpos($key, 'event_connector') === 0 && !empty($value)) {
+          $res_inner[$key] = $value;
+        }
+      }
+      $res[$level] = $res_inner;
+    }
+    variable_set('event_connector_mappings', $res);
+  }
+}
+
+/**
  * Filed mappings form.
  */
-function event_connector_field_mappings(&$form, $items) {
+function event_connector_field_mappings(&$form, $items, $defs) {
+  //dpm($defs, 'defs');
   $filename = drupal_get_path('module', 'event_connector');
   $filename .= '/event_description.json';
 
   if (file_exists($filename)) {
     $json = file_get_contents($filename);
     $event_data = json_decode($json);
-    dpm($event_data, 'Event');
+    // dpm($event_data, 'Event');
     foreach ($event_data as $key => $item) {
       if ($key != 'data') {
         continue;
@@ -117,20 +161,22 @@ function event_connector_field_mappings(&$form, $items) {
 
       foreach ($fields as $idx => $value) {
         $title = ucfirst(str_replace('_', ' ', $idx));
-        $form['level_' . $idx] = array(
+        $level = is_object($value) ? 'level_' . $idx . '-obj' : 'level_' . $idx . '-arr';
+        $form[$level] = array(
           '#type' => 'fieldset',
           '#title' => $title,
           '#collapsible' => TRUE,
           '#collapsed' => FALSE,
+          '#tree' => TRUE,
         );
 
         if (is_object($value)) {
           foreach ($value as $caption => $field) {
             $title = ucfirst(str_replace('_', ' ', $caption));
-            $form['level_' . $idx]['event_connector_' . $caption] = array(
+            $form[$level]['event_connector_' . $caption] = array(
               '#type' => 'select',
               '#title' => $title,
-              '#default_value' => '',
+              '#default_value' => isset($defs[$level]['event_connector_' . $caption]) ? $defs[$level]['event_connector_' . $caption] : '',
               '#options' => $items,
             );
           }
@@ -138,30 +184,31 @@ function event_connector_field_mappings(&$form, $items) {
         else {
           $arr_value = current($value);
           foreach ($arr_value as $caption => $field) {
-            $form['level_' . $idx]['event_connector_' . $caption] = array(
+            $title = ucfirst(str_replace('_', ' ', $caption));
+            $form[$level]['event_connector_' . $caption] = array(
               '#type' => 'select',
-              '#title' => $caption,
-              '#default_value' => '',
+              '#title' => $title,
+              '#default_value' => isset($defs[$level]['event_connector_' . $caption]) ? $defs[$level]['event_connector_' . $caption] : '',
               '#options' => $items,
             );
-            $current_item = current($field);
-            if (is_object($current_item)) {
-              $form['level_' . $idx]['sub_' . $caption] = array(
-                '#type' => 'fieldset',
-                '#collapsible' => FALSE,
-                '#collapsed' => FALSE,
-              );
-
-              foreach ($current_item as $a => $b) {
-                $title = ucfirst(str_replace('_', ' ', $a));
-                $form['level_' . $idx]['sub_' . $caption]['event_connector_' . $a] = array(
-                  '#type' => 'select',
-                  '#title' => $title,
-                  '#default_value' => '',
-                  '#options' => $items,
-                );
-              }
-            }
+            // $current_item = current($field);
+            // if (is_object($current_item)) {
+            //   $form[$level]['sub_' . $caption] = array(
+            //     '#type' => 'fieldset',
+            //     '#collapsible' => FALSE,
+            //     '#collapsed' => FALSE,
+            //   );
+            //
+            //   foreach ($current_item as $a => $b) {
+            //     $title = ucfirst(str_replace('_', ' ', $a));
+            //     $form[$level]['sub_' . $caption]['event_connector_' . $a] = array(
+            //       '#type' => 'select',
+            //       '#title' => $title,
+            //       '#default_value' => isset($defs['event_connector_' . $a]) ? $defs['event_connector_' . $a] : '',
+            //       '#options' => $items,
+            //     );
+            //   }
+            // }
           }
         }
       }
@@ -176,6 +223,14 @@ function event_connector_field_mappings(&$form, $items) {
  */
 function event_connector_settings() {
   $form = array();
+
+  $form['event_connector_apiurl'] = array(
+    '#type' => 'textfield',
+    '#title' => t('URL to API'),
+    '#default_value' => variable_get('event_connector_apiurl', ''),
+    '#description' => t('URL to Event Calendar API.'),
+    '#required' => TRUE,
+  );
 
   $form['event_connector_apikey'] = array(
     '#type' => 'textfield',
@@ -192,4 +247,295 @@ function event_connector_settings() {
   );
 
   return system_settings_form($form);
+}
+
+/**
+ * Implements hook_insert().
+ */
+function event_connector_node_insert($node) {
+  $our_event_type = variable_get('event_connector_type', '');
+  if ($our_event_type == $node->type &&
+      $node->status == 1 &&
+      $node->field_ulkoiseen_tapahtumakalente[LANGUAGE_NONE][0]['value'] == 1) {
+    _event_connector_send_to_calendar($node);
+  }
+}
+
+/**
+ * Implements hook_update().
+ */
+function event_connector_node_update($node) {
+  $our_event_type = variable_get('event_connector_type', '');
+  if ($our_event_type == $node->type &&
+      $node->status == 1 &&
+      $node->field_ulkoiseen_tapahtumakalente[LANGUAGE_NONE][0]['value'] == 1) {
+    _event_connector_send_to_calendar($node);
+  }
+}
+
+/**
+ * Implements hook_workbench_moderation_transition().
+ */
+function event_connector_workbench_moderation_transition($node, $previous_state, $new_state) {
+  $our_event_type = variable_get('event_connector_type', '');
+  if ($our_event_type == $node->type &&
+      $node->field_ulkoiseen_tapahtumakalente[LANGUAGE_NONE][0]['value'] == 1 &&
+      $node->workbench_moderation['current']->published == TRUE) {
+    _event_connector_send_to_calendar($node);
+  }
+}
+
+/**
+ * Send event to external event calendar.
+ *
+ * @param object $node
+ *    Event node.
+ */
+function _event_connector_send_to_calendar($node) {
+  $data = '{
+	"apikey" : "...your api key...",
+	"languages" : ["fi","en"],
+	"test" : "true",
+	"data" : [
+		{
+			"basicInfo" : {
+				"title" : {
+					"fi" : "Esimerkki Otsikko",
+					"en" : "Example title"
+				},
+				"published" : {
+					"fi" : "1",
+					"en" : "1"
+				},
+				"description" : {
+					"fi" : "Esimerkki tapahtuma",
+					"en" : "Example event"
+				},
+				"price" : "10",
+				"event_is_free" : "0",
+				"event_is_accessible" : "1",
+				"event_is_all_ages" : "1",
+				"buy_ticket_link" : "buy_ticket_link",
+				"buy_ticket_text" : {
+					"fi" : "http://google.com",
+					"en" : "http://google.com"
+				},
+				"categories" : "1,2",
+				"tourist_areas" : "1,2",
+				"target_groups" : "1,2"
+			},
+			"contactInformation" : {
+				"organizer_name" : "Example organizer",
+				"phone" : "1234567",
+				"email" : "example@example.com",
+				"street_address" : "Example street",
+				"zip_code" : "80110",
+				"city" : "JOENSUU",
+				"map" : {
+					"lat":"62.603494526536934",
+					"lng":"29.771407378369076"
+				},
+				"homepage" : "http://google.com",
+				"event_location" : {
+					"fi" : "Satunnainen esimerkkisijainti",
+					"en" : "Random event location"
+				}
+			},
+			"dates" : [{
+					"start_datetime" : "2016-12-10",
+					"event_repeat" : "monthly",
+					"repeat_amount" : "2",
+					"end_datetime" : "2017-01-01"
+				}
+			],
+			"images" : [{
+					"image" : {
+						"fi" : {
+							"data" : "iVBORw0KGgoAAAANSUhEUgAAAGQAAAAeAQMAAADglSmwAAAABlBMVEX///8AAP94wDzzAAAAW0lEQVQYlWNgIBr8AxGMBxgMwLwDUBIrL7F/2tkDBz5AeH+MJW7nJRycAZWTY7idY3CYB8rjkQfx/sDkDEA8mCnGhiB9PVDbE+fdzj344IcB3D08KK5D5Q0rAAAP8STZfzqOdwAAAABJRU5ErkJggg==",
+							"filename" : "example.png"
+						},
+						"en" : {
+							"data" : "iVBORw0KGgoAAAANSUhEUgAAAGQAAAAeAQMAAADglSmwAAAABlBMVEX///8AAP94wDzzAAAAW0lEQVQYlWNgIBr8AxGMBxgMwLwDUBIrL7F/2tkDBz5AeH+MJW7nJRycAZWTY7idY3CYB8rjkQfx/sDkDEA8mCnGhiB9PVDbE+fdzj344IcB3D08KK5D5Q0rAAAP8STZfzqOdwAAAABJRU5ErkJggg==",
+							"filename" : "example.png"
+						}
+					},
+					"alt_text" : {
+						"fi" : "Esimerkkikuva",
+						"en" : "Example image"
+					}
+				}
+			],
+			"videos" : [{
+					"video" : {
+						"fi" : "html embed video",
+						"en" : "html embed video"
+					}
+				}
+			],
+			"links" : [{
+					"link_title" : {
+						"fi" : "Esimerkki linkki",
+						"en" : "Example link"
+					},
+					"link_url" : {
+						"fi" : "http://google.com",
+						"en" : "http://google.com"
+					}
+				}
+			],
+			"attachments" : [{
+					"event_file_title" : {
+						"fi" : "event_file_title",
+						"en" : "event_file_title"
+					},
+					"event_file" : {
+						"fi" : {
+							"data" : "JVBERi0xLjMgCjEgMCBvYmoKPDwKL1BhZ2VzIDIgMCBSCi9UeXBlIC9DYXRhbG9nCj4+CmVuZG9iagoyIDAgb2JqCjw8Ci9UeXBlIC9QYWdlcwovS2lkcyBbIDMgMCBSIF0KL0NvdW50IDEKPj4KZW5kb2JqCjMgMCBvYmoKPDwKL1R5cGUgL1BhZ2UKL1BhcmVudCAyIDAgUgovUmVzb3VyY2VzIDw8Ci9YT2JqZWN0IDw8IC9JbTAgOCAwIFIgPj4KL1Byb2NTZXQgNiAwIFIgPj4KL01lZGlhQm94IFswIDAgMTAwIDMwXQovQ3JvcEJveCBbMCAwIDEwMCAzMF0KL0NvbnRlbnRzIDQgMCBSCi9UaHVtYiAxMSAwIFIKPj4KZW5kb2JqCjQgMCBvYmoKPDwKL0xlbmd0aCA1IDAgUgo+PgpzdHJlYW0KcQoxMDAgMCAwIDMwIDAgMCBjbQovSW0wIERvClEKCmVuZHN0cmVhbQplbmRvYmoKNSAwIG9iagozMAplbmRvYmoKNiAwIG9iagpbIC9QREYgL1RleHQgL0ltYWdlSSBdCmVuZG9iago3IDAgb2JqCjw8Cj4+CmVuZG9iago4IDAgb2JqCjw8Ci9UeXBlIC9YT2JqZWN0Ci9TdWJ0eXBlIC9JbWFnZQovTmFtZSAvSW0wCi9GaWx0ZXIgWyAvRmxhdGVEZWNvZGUgXQovV2lkdGggMTAwCi9IZWlnaHQgMzAKL0NvbG9yU3BhY2UgMTAgMCBSCi9CaXRzUGVyQ29tcG9uZW50IDgKL0xlbmd0aCA5IDAgUgo+PgpzdHJlYW0KeNrtUosKwCAIzP//6bEevjZSYbAN7ggzKfW8WgOyoIHC9WsoflTt6eM1htPtnB6dp+6QzEh2H9nVWLdnNjFqEadSm43kuBvtbQ1H9MZm58uNDW7bGpZ/lQe/DHmUNecRL9lDPdJ/kklr4R0J9a9IO1nNc308keX9GgAAAMC/cADQ/gDzCmVuZHN0cmVhbQplbmRvYmoKOSAwIG9iagoxMzIKZW5kb2JqCjEwIDAgb2JqClsgL0luZGV4ZWQgL0RldmljZVJHQiAxIDEzIDAgUiBdCmVuZG9iagoxMSAwIG9iago8PAovRmlsdGVyIFsgL0ZsYXRlRGVjb2RlIF0KL1dpZHRoIDEwMAovSGVpZ2h0IDMwCi9Db2xvclNwYWNlIDEwIDAgUgovQml0c1BlckNvbXBvbmVudCA4Ci9MZW5ndGggMTIgMCBSCj4+CnN0cmVhbQp42u1SiwrAIAjM///psR6+NlJhsA3uCDMp9bxaA7KggcL1ayh+VO3p4zWG0+2cHp2n7pDMSHYf2dVYt2c2MWoRp1KbjeS4G+1tDUf0xmbny40Nbtsaln+VB78MeZQ15xEv2UM90n+SSWvhHQn1r0g7Wc1zfTyR5f0aAAAAwL9wAND+APMKZW5kc3RyZWFtCmVuZG9iagoxMiAwIG9iagoxMzIKZW5kb2JqCjEzIDAgb2JqCjw8Ci9MZW5ndGggMTQgMCBSCj4+CnN0cmVhbQr///8AAP8KZW5kc3RyZWFtCmVuZG9iagoxNCAwIG9iago2CmVuZG9iagoxNSAwIG9iago8PAo+PgplbmRvYmoKMTYgMCBvYmoKNgplbmRvYmoKMTcgMCBvYmoKPDwKL1RpdGxlIChleGFtcGxlKQovQ3JlYXRpb25EYXRlIChEOjIwMTYwOTI3MTQxMDMwKQovTW9kRGF0ZSAoRDoyMDE2MDkyNzE0MTAzMCkKL1Byb2R1Y2VyIChJbWFnZU1hZ2ljayA2LjkuMS0yIFExNiB4NjQgMjAxNS0wNC0xNCBodHRwOi8vd3d3LmltYWdlbWFnaWNrLm9yZykKPj4KZW5kb2JqCnhyZWYKMCAxOAowMDAwMDAwMDAwIDY1NTM1IGYgCjAwMDAwMDAwMTAgMDAwMDAgbiAKMDAwMDAwMDA1OSAwMDAwMCBuIAowMDAwMDAwMTE4IDAwMDAwIG4gCjAwMDAwMDAyOTggMDAwMDAgbiAKMDAwMDAwMDM4MSAwMDAwMCBuIAowMDAwMDAwMzk5IDAwMDAwIG4gCjAwMDAwMDA0MzcgMDAwMDAgbiAKMDAwMDAwMDQ1OCAwMDAwMCBuIAowMDAwMDAwNzcxIDAwMDAwIG4gCjAwMDAwMDA3OTAgMDAwMDAgbiAKMDAwMDAwMDgzOSAwMDAwMCBuIAowMDAwMDAxMTEyIDAwMDAwIG4gCjAwMDAwMDExMzIgMDAwMDAgbiAKMDAwMDAwMTE5MyAwMDAwMCBuIAowMDAwMDAxMjExIDAwMDAwIG4gCjAwMDAwMDEyMzMgMDAwMDAgbiAKMDAwMDAwMTI1MSAwMDAwMCBuIAp0cmFpbGVyCjw8Ci9TaXplIDE4Ci9JbmZvIDE3IDAgUgovUm9vdCAxIDAgUgovSUQgWzxlMjAwMDYzZmUxZGNjMjhmNWU2YTM5ZTJkYWMwMTQ4Y2VlZDlhNjI1YjM5MTU2ZjdlN2RjODc3NTkyY2Q3ODhkPiA8ZTIwMDA2M2ZlMWRjYzI4ZjVlNmEzOWUyZGFjMDE0OGNlZWQ5YTYyNWIzOTE1NmY3ZTdkYzg3NzU5MmNkNzg4ZD5dCj4+CnN0YXJ0eHJlZgoxNDI5CiUlRU9GCg==",
+							"filename" : "Example.pdf"
+						},
+						"en" : {
+							"data" : "JVBERi0xLjMgCjEgMCBvYmoKPDwKL1BhZ2VzIDIgMCBSCi9UeXBlIC9DYXRhbG9nCj4+CmVuZG9iagoyIDAgb2JqCjw8Ci9UeXBlIC9QYWdlcwovS2lkcyBbIDMgMCBSIF0KL0NvdW50IDEKPj4KZW5kb2JqCjMgMCBvYmoKPDwKL1R5cGUgL1BhZ2UKL1BhcmVudCAyIDAgUgovUmVzb3VyY2VzIDw8Ci9YT2JqZWN0IDw8IC9JbTAgOCAwIFIgPj4KL1Byb2NTZXQgNiAwIFIgPj4KL01lZGlhQm94IFswIDAgMTAwIDMwXQovQ3JvcEJveCBbMCAwIDEwMCAzMF0KL0NvbnRlbnRzIDQgMCBSCi9UaHVtYiAxMSAwIFIKPj4KZW5kb2JqCjQgMCBvYmoKPDwKL0xlbmd0aCA1IDAgUgo+PgpzdHJlYW0KcQoxMDAgMCAwIDMwIDAgMCBjbQovSW0wIERvClEKCmVuZHN0cmVhbQplbmRvYmoKNSAwIG9iagozMAplbmRvYmoKNiAwIG9iagpbIC9QREYgL1RleHQgL0ltYWdlSSBdCmVuZG9iago3IDAgb2JqCjw8Cj4+CmVuZG9iago4IDAgb2JqCjw8Ci9UeXBlIC9YT2JqZWN0Ci9TdWJ0eXBlIC9JbWFnZQovTmFtZSAvSW0wCi9GaWx0ZXIgWyAvRmxhdGVEZWNvZGUgXQovV2lkdGggMTAwCi9IZWlnaHQgMzAKL0NvbG9yU3BhY2UgMTAgMCBSCi9CaXRzUGVyQ29tcG9uZW50IDgKL0xlbmd0aCA5IDAgUgo+PgpzdHJlYW0KeNrtUosKwCAIzP//6bEevjZSYbAN7ggzKfW8WgOyoIHC9WsoflTt6eM1htPtnB6dp+6QzEh2H9nVWLdnNjFqEadSm43kuBvtbQ1H9MZm58uNDW7bGpZ/lQe/DHmUNecRL9lDPdJ/kklr4R0J9a9IO1nNc308keX9GgAAAMC/cADQ/gDzCmVuZHN0cmVhbQplbmRvYmoKOSAwIG9iagoxMzIKZW5kb2JqCjEwIDAgb2JqClsgL0luZGV4ZWQgL0RldmljZVJHQiAxIDEzIDAgUiBdCmVuZG9iagoxMSAwIG9iago8PAovRmlsdGVyIFsgL0ZsYXRlRGVjb2RlIF0KL1dpZHRoIDEwMAovSGVpZ2h0IDMwCi9Db2xvclNwYWNlIDEwIDAgUgovQml0c1BlckNvbXBvbmVudCA4Ci9MZW5ndGggMTIgMCBSCj4+CnN0cmVhbQp42u1SiwrAIAjM///psR6+NlJhsA3uCDMp9bxaA7KggcL1ayh+VO3p4zWG0+2cHp2n7pDMSHYf2dVYt2c2MWoRp1KbjeS4G+1tDUf0xmbny40Nbtsaln+VB78MeZQ15xEv2UM90n+SSWvhHQn1r0g7Wc1zfTyR5f0aAAAAwL9wAND+APMKZW5kc3RyZWFtCmVuZG9iagoxMiAwIG9iagoxMzIKZW5kb2JqCjEzIDAgb2JqCjw8Ci9MZW5ndGggMTQgMCBSCj4+CnN0cmVhbQr///8AAP8KZW5kc3RyZWFtCmVuZG9iagoxNCAwIG9iago2CmVuZG9iagoxNSAwIG9iago8PAo+PgplbmRvYmoKMTYgMCBvYmoKNgplbmRvYmoKMTcgMCBvYmoKPDwKL1RpdGxlIChleGFtcGxlKQovQ3JlYXRpb25EYXRlIChEOjIwMTYwOTI3MTQxMDMwKQovTW9kRGF0ZSAoRDoyMDE2MDkyNzE0MTAzMCkKL1Byb2R1Y2VyIChJbWFnZU1hZ2ljayA2LjkuMS0yIFExNiB4NjQgMjAxNS0wNC0xNCBodHRwOi8vd3d3LmltYWdlbWFnaWNrLm9yZykKPj4KZW5kb2JqCnhyZWYKMCAxOAowMDAwMDAwMDAwIDY1NTM1IGYgCjAwMDAwMDAwMTAgMDAwMDAgbiAKMDAwMDAwMDA1OSAwMDAwMCBuIAowMDAwMDAwMTE4IDAwMDAwIG4gCjAwMDAwMDAyOTggMDAwMDAgbiAKMDAwMDAwMDM4MSAwMDAwMCBuIAowMDAwMDAwMzk5IDAwMDAwIG4gCjAwMDAwMDA0MzcgMDAwMDAgbiAKMDAwMDAwMDQ1OCAwMDAwMCBuIAowMDAwMDAwNzcxIDAwMDAwIG4gCjAwMDAwMDA3OTAgMDAwMDAgbiAKMDAwMDAwMDgzOSAwMDAwMCBuIAowMDAwMDAxMTEyIDAwMDAwIG4gCjAwMDAwMDExMzIgMDAwMDAgbiAKMDAwMDAwMTE5MyAwMDAwMCBuIAowMDAwMDAxMjExIDAwMDAwIG4gCjAwMDAwMDEyMzMgMDAwMDAgbiAKMDAwMDAwMTI1MSAwMDAwMCBuIAp0cmFpbGVyCjw8Ci9TaXplIDE4Ci9JbmZvIDE3IDAgUgovUm9vdCAxIDAgUgovSUQgWzxlMjAwMDYzZmUxZGNjMjhmNWU2YTM5ZTJkYWMwMTQ4Y2VlZDlhNjI1YjM5MTU2ZjdlN2RjODc3NTkyY2Q3ODhkPiA8ZTIwMDA2M2ZlMWRjYzI4ZjVlNmEzOWUyZGFjMDE0OGNlZWQ5YTYyNWIzOTE1NmY3ZTdkYzg3NzU5MmNkNzg4ZD5dCj4+CnN0YXJ0eHJlZgoxNDI5CiUlRU9GCg==",
+							"filename" : "Example.pdf"
+						}
+					}
+				}
+			]
+		}
+	]}';
+
+  $map = variable_get('event_connector_mappings', array());
+
+  $data = array();
+  $data['apikey'] = variable_get('event_connector_apikey', '');
+  $lang = isset($node->language) ? $node->language : LANGUAGE_NONE;
+  $data['languages'] = array($lang);
+  $data['test'] = variable_get('event_connector_test', FALSE) ? 'true' : 'false';
+
+  foreach ($map as $level => $arr) {
+    list($level_start, $level_type) = explode('-', $level);
+    $level_name = substr($level_start, 6);
+    //dpm($level_type, 'level type');
+    if (empty($arr)) {
+      continue;
+    }
+    $block = array();
+    foreach ($arr as $key => $value) {
+      $field_name = substr($key, 16);
+      $field_value = _event_connector_fetch_node_field_value($node, $value);
+
+      $block[$field_name] = $field_value;
+    }
+    if ($level_type == 'arr') {
+      $rows[$level_name][] = $block;
+    }
+    else {
+      $rows[$level_name] = $block;
+    }
+  }
+  $data['data'][] = $rows;
+
+  // dpm($data);
+  $json_data = json_encode($data);
+
+  // Pull the url out of the drupal settings.
+  $url = variable_get('event_connector_apiurl', '');
+  if ($url != '') {
+    $url .= 'Events/create';
+    $response = drupal_http_request($url, array(
+      'method' => 'POST',
+      'data' => $json_data,
+      'max_redirects' => 0,
+      'headers' => array(
+        'Content-Type' => 'application/json',
+        'Accept' => 'application/json',
+      ),
+    ));
+
+    if ($response->code != 200) {
+      watchdog('event connector', 'Return code @code, error: @msg', array(
+        '@code' => $response->code,
+        '@msg' => $response->data,
+      ));
+    }
+    //dpm($response);
+  }
+
+}
+
+/**
+ * Get field value from node.
+ *
+ * @param object $node
+ *    Node to save.
+ * @param string $field
+ *    Field name to get data.
+ *
+ * @return string
+ *    Value for field.
+ */
+function _event_connector_fetch_node_field_value($node, $field) {
+  list($name, $delta, $type) = explode('-', $field);
+  $result = '';
+
+  // dpm($node);
+  // dpm($field);
+
+  // dpm($name, 'name');
+  // dpm($delta, 'delta');
+  // dpm($type, 'type');
+
+  if (strpos($name, 'field_') === 0) {
+    if (isset($delta)) {
+      $value = $node->{$name}[LANGUAGE_NONE][0][$delta];
+    }
+    else {
+      $value = isset($node->{$name}[LANGUAGE_NONE][0]['value']) ?
+        $node->{$name}[LANGUAGE_NONE][0]['value'] : '';
+    }
+
+    switch ($type) {
+      case 'date':
+        $result = substr($value, 0, 10);
+        break;
+
+      case 'term':
+        $result = taxonomy_term_load($value)->name;
+        break;
+
+      case 'image':
+        $lang = isset($node->language) ? $node->language : LANGUAGE_NONE;
+        $file = file_load($value);
+        $filename = drupal_realpath($file->uri);
+        $img = file_get_contents($filename);
+        $image_str = base64_encode($img);
+        $result = array(
+          $lang => array(
+            'filename' => $node->{$name}[LANGUAGE_NONE][0]['filename'],
+            'data' => $image_str,
+          ),
+        );
+        // dpm($result, 'result');
+        break;
+
+      default:
+        $result = $value;
+        break;
+    }
+
+  }
+  else {
+    if ($name == 'title') {
+      $result = $node->title;
+    }
+    elseif ($name == 'published') {
+      if (isset($node->workbench_moderation['current'])) {
+        $result = $node->workbench_moderation['current']->published ? '1' : '0';
+      }
+      else {
+        $result = $node->status ? '1' : '0';
+      }
+    }
+  }
+
+  return $result;
 }
