@@ -246,6 +246,13 @@ function event_connector_settings() {
     '#default_value' => variable_get('event_connector_test', FALSE),
   );
 
+  $form['event_local_test'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Test content locally.'),
+    '#description' => t('When checked no content is sended. Query is printed to screen.'),
+    '#default_value' => variable_get('event_local_test', TRUE),
+  );
+
   return system_settings_form($form);
 }
 
@@ -292,6 +299,12 @@ function event_connector_workbench_moderation_transition($node, $previous_state,
  *    Event node.
  */
 function _event_connector_send_to_calendar($node) {
+  $been_here = &drupal_static(__FUNCTION__);
+  if (isset($been_here)) {
+    return;
+  }
+  $been_here = 'Processed!';
+
   $data = '{
 	"apikey" : "...your api key...",
 	"languages" : ["fi","en"],
@@ -437,6 +450,11 @@ function _event_connector_send_to_calendar($node) {
   // dpm($data);
   $json_data = json_encode($data);
 
+  if (variable_get('event_local_test', TRUE)) {
+    drupal_set_message('Message send to Event calendar:');
+    drupal_set_message($json_data);
+    return;
+  }
   // Pull the url out of the drupal settings.
   $url = variable_get('event_connector_apiurl', '');
   if ($url != '') {
