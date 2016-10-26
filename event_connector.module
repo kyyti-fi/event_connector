@@ -76,10 +76,8 @@ function event_connector_mapping() {
   );
 
   if ($our_event_type != '0') {
-
     $fields = field_info_instances('node', $our_event_type);
-    // dpm($types);
-    // dpm($fields, 'fields');
+
     $items[0] = t('No mapping');
     $items['title'] = $types[$our_event_type]->title_label;
     foreach ($fields as $key => $value) {
@@ -98,7 +96,6 @@ function event_connector_mapping() {
       else {
         $items[$key] = $value['label'];
       }
-      //dpm($value, 'value');
     }
     $items['published'] = t('Published');
 
@@ -145,14 +142,13 @@ function event_connector_mapping_submit($form, &$form_state) {
  * Filed mappings form.
  */
 function event_connector_field_mappings(&$form, $items, $defs) {
-  //dpm($defs, 'defs');
   $filename = drupal_get_path('module', 'event_connector');
   $filename .= '/event_description.json';
 
   if (file_exists($filename)) {
     $json = file_get_contents($filename);
     $event_data = json_decode($json);
-    // dpm($event_data, 'Event');
+
     foreach ($event_data as $key => $item) {
       if ($key != 'data') {
         continue;
@@ -303,9 +299,11 @@ function _event_connector_send_to_calendar($node) {
   if (isset($been_here)) {
     return;
   }
-  $been_here = 'Processed!';
+  else {
+    $been_here = 'Processed!';
+  }
 
-  $data = '{
+  $example_data = '{
 	"apikey" : "...your api key...",
 	"languages" : ["fi","en"],
 	"test" : "true",
@@ -427,7 +425,6 @@ function _event_connector_send_to_calendar($node) {
   foreach ($map as $level => $arr) {
     list($level_start, $level_type) = explode('-', $level);
     $level_name = substr($level_start, 6);
-    //dpm($level_type, 'level type');
     if (empty($arr)) {
       continue;
     }
@@ -475,7 +472,6 @@ function _event_connector_send_to_calendar($node) {
         '@msg' => $response->data,
       ));
     }
-    //dpm($response);
   }
 
 }
@@ -494,13 +490,7 @@ function _event_connector_send_to_calendar($node) {
 function _event_connector_fetch_node_field_value($node, $field) {
   list($name, $delta, $type) = explode('-', $field);
   $result = '';
-
-  // dpm($node);
-  // dpm($field);
-
-  // dpm($name, 'name');
-  // dpm($delta, 'delta');
-  // dpm($type, 'type');
+  $lang = isset($node->language) ? $node->language : LANGUAGE_NONE;
 
   if (strpos($name, 'field_') === 0) {
     if (isset($delta)) {
@@ -521,7 +511,6 @@ function _event_connector_fetch_node_field_value($node, $field) {
         break;
 
       case 'image':
-        $lang = isset($node->language) ? $node->language : LANGUAGE_NONE;
         $file = file_load($value);
         $filename = drupal_realpath($file->uri);
         $img = file_get_contents($filename);
@@ -532,7 +521,6 @@ function _event_connector_fetch_node_field_value($node, $field) {
             'data' => $image_str,
           ),
         );
-        // dpm($result, 'result');
         break;
 
       default:
@@ -553,6 +541,17 @@ function _event_connector_fetch_node_field_value($node, $field) {
         $result = $node->status ? '1' : '0';
       }
     }
+  }
+  // ToDo: Information about language depended fields must be come from
+  // settings page.
+  $lang_fields = array(
+    'title',
+    'published',
+    'field_tapahtuman_kuvaus',
+    'field_tapahtumapaikka',
+  );
+  if (in_array($name, $lang_fields)) {
+    $result = array($lang => $result);
   }
 
   return $result;
