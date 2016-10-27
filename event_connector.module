@@ -433,7 +433,12 @@ function _event_connector_send_to_calendar($node) {
       $field_name = substr($key, 16);
       $field_value = _event_connector_fetch_node_field_value($node, $value);
 
-      $block[$field_name] = $field_value;
+      if ($field_value !== NULL) {
+        $block[$field_name] = $field_value;
+      }
+    }
+    if (empty($block)) {
+      continue;
     }
     if ($level_type == 'arr') {
       $rows[$level_name][] = $block;
@@ -499,6 +504,9 @@ function _event_connector_fetch_node_field_value($node, $field) {
     else {
       $value = isset($node->{$name}[LANGUAGE_NONE][0]['value']) ?
         $node->{$name}[LANGUAGE_NONE][0]['value'] : '';
+    }
+    if ($value == NULL) {
+      return $value;
     }
 
     switch ($type) {
