@@ -476,6 +476,13 @@ function _event_connector_send_to_calendar($node) {
         '@code' => $response->code,
         '@msg' => $response->data,
       ));
+      drupal_set_message(t('Event send failed. Return code @code, error: @msg', array(
+        '@code' => $response->code,
+        '@msg' => $response->data,
+      ), 'error'));
+    }
+    else {
+      drupal_set_message(t('Event send successful to Kymenlaakso tapahtumakalenteri.'));
     }
   }
 
