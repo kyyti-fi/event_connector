@@ -493,13 +493,22 @@ function _event_connector_send_to_calendar($node) {
  *    Value for field.
  */
 function _event_connector_fetch_node_field_value($node, $field) {
-  list($name, $delta, $type) = explode('-', $field);
+  $parts = explode('-', $field);
+  while (count($parts) < 3) {
+    $parts[] = NULL;
+  }
+  list($name, $delta, $type) = $parts;
   $result = '';
   $lang = isset($node->language) ? $node->language : LANGUAGE_NONE;
 
   if (strpos($name, 'field_') === 0) {
     if (isset($delta)) {
-      $value = $node->{$name}[LANGUAGE_NONE][0][$delta];
+      if (isset($node->{$name}[LANGUAGE_NONE][0][$delta])) {
+        $value = $node->{$name}[LANGUAGE_NONE][0][$delta];
+      }
+      else {
+        return NULL;
+      }
     }
     else {
       $value = isset($node->{$name}[LANGUAGE_NONE][0]['value']) ?
