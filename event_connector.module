@@ -460,7 +460,7 @@ function _event_connector_send_to_calendar($node) {
   // Pull the url out of the drupal settings.
   $url = variable_get('event_connector_apiurl', '');
   if ($url != '') {
-    $url .= 'Events/create';
+    $url .= 'events/create';
     $response = drupal_http_request($url, array(
       'method' => 'POST',
       'data' => $json_data,
