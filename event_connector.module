@@ -249,6 +249,13 @@ function event_connector_settings() {
     '#default_value' => variable_get('event_local_test', TRUE),
   );
 
+  $form['event_conn_log'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Log messages.'),
+    '#description' => t('Send message log for debug reasons.'),
+    '#default_value' => variable_get('event_conn_log', FALSE),
+  );
+
   return system_settings_form($form);
 }
 
@@ -452,6 +459,10 @@ function _event_connector_send_to_calendar($node) {
   // dpm($data);
   $json_data = json_encode($data);
 
+  if (variable_get('event_conn_log', FALSE)) {
+    watchdog('Event Conn', 'Json data to send: @json', array('@json' => $json_data), WATCHDOG_DEBUG);
+  }
+
   if (variable_get('event_local_test', TRUE)) {
     drupal_set_message('Message send to Event calendar:');
     drupal_set_message($json_data);
@@ -479,7 +490,7 @@ function _event_connector_send_to_calendar($node) {
       drupal_set_message(t('Event send failed. Return code @code, error: @msg', array(
         '@code' => $response->code,
         '@msg' => $response->data,
-      ), 'error'));
+      )), 'error');
     }
     else {
       drupal_set_message(t('Event send successful to Kymenlaakso tapahtumakalenteri.'));
