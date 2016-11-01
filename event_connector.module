@@ -33,6 +33,14 @@ function event_connector_menu() {
     'access arguments' => array('administer event connector'),
     'type' => MENU_LOCAL_TASK,
   );
+  $items['admin/structure/event_connector/lists'] = array(
+    'title' => 'Lists',
+    'description' => 'List from api.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('event_connector_list_page'),
+    'access arguments' => array('administer event connector'),
+    'type' => MENU_LOCAL_TASK,
+  );
   $items['admin/structure/event_connector/general'] = array(
     'title' => 'Field mappings',
     'type' => MENU_DEFAULT_LOCAL_TASK,
@@ -590,4 +598,112 @@ function _event_connector_fetch_node_field_value($node, $field) {
   }
 
   return $result;
+}
+
+/**
+ * Query list from api.
+ *
+ * @param string $list
+ *    List to query.
+ *
+ * @return array
+ *    Result list.
+ */
+function event_connector_get_list($list) {
+  $data = array();
+  $data['apikey'] = variable_get('event_connector_apikey', '');
+  $data['languages'] = array('fi');
+  $json_data = json_encode($data);
+
+  // Pull the url out of the drupal settings.
+  $url = variable_get('event_connector_apiurl', '');
+  if ($url != '') {
+    $url .= $list;
+    $response = drupal_http_request($url, array(
+      'method' => 'POST',
+      'data' => $json_data,
+      'max_redirects' => 0,
+      'headers' => array(
+        'Content-Type' => 'application/json',
+        'Accept' => 'application/json',
+      ),
+    ));
+
+    if ($response->code != 200) {
+      watchdog('event connector', 'List query "@list". Return code @code, error: @msg', array(
+        '@list' => $list,
+        '@code' => $response->code,
+        '@msg' => $response->data,
+      ));
+      drupal_set_message(t('List query "@list". Event send failed. Return code @code, error: @msg', array(
+        '@list' => $list,
+        '@code' => $response->code,
+        '@msg' => $response->data,
+      )), 'error');
+    }
+
+    $result = json_decode($response->data);
+    if ($result->success == 'TRUE') {
+      $ret = array();
+      foreach ($result->data as $row) {
+        $ret[$row->id] = $row->title;
+      }
+      return $ret;
+    }
+    else {
+      return array();
+    }
+  }
+}
+
+/**
+ * Page to show list get from api.
+ */
+function event_connector_list_page() {
+  $area_list = event_connector_get_list('areas/list');
+  $rows = array();
+  foreach ($area_list as $key => $value) {
+    $rows[] = array(
+      array('data' => $key),
+      array('data' => $value)
+    );
+  }
+  $header = array(t('Id'), t('Areas'));
+  $form['areas'] = array(
+    '#type' => 'item',
+    '#title' => t('Areas'),
+    '#markup' => theme('table', array('header' => $header, 'rows' => $rows)),
+  );
+
+  $category_list = event_connector_get_list('categories/list');
+  $rows = array();
+  foreach ($category_list as $key => $value) {
+    $rows[] = array(
+      array('data' => $key),
+      array('data' => $value)
+    );
+  }
+  $header = array(t('Id'), t('Categories'));
+  $form['categories'] = array(
+    '#type' => 'item',
+    '#title' => t('Categories'),
+    '#markup' => theme('table', array('header' => $header, 'rows' => $rows)),
+  );
+
+  $target_list = event_connector_get_list('targetgroups/list');
+  $rows = array();
+  foreach ($target_list as $key => $value) {
+    $rows[] = array(
+      array('data' => $key),
+      array('data' => $value)
+    );
+  }
+  $header = array(t('Id'), t('Target groups'));
+  $form['targetgroups'] = array(
+    '#type' => 'item',
+    '#title' => t('Target groups'),
+    '#markup' => theme('table', array('header' => $header, 'rows' => $rows)),
+  );
+
+  return $form;
 }
