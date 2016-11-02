@@ -490,6 +490,10 @@ function _event_connector_send_to_calendar($node) {
       ),
     ));
 
+    if (variable_get('event_conn_log', FALSE)) {
+      watchdog('Event Conn', 'Response from api: @response', array('@response' => print_r($response, TRUE)), WATCHDOG_DEBUG);
+    }
+
     if ($response->code != 200) {
       watchdog('event connector', 'Return code @code, error: @msg', array(
         '@code' => $response->code,
