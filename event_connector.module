@@ -564,7 +564,7 @@ function _event_connector_fetch_node_field_value($node, $field) {
         $image_str = base64_encode($img);
         $result = array(
           $lang => array(
-            'filename' => $node->{$name}[LANGUAGE_NONE][0]['filename'],
+            'filename' => $file->filename,
             'data' => $image_str,
           ),
         );
