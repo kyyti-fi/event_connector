@@ -5,6 +5,13 @@
  */
 
 /**
+ * Evant api list taxonomies machine names.
+ */
+define('EVENT_CONNECTOR_AREA_VOC', 'ec_areas');
+define('EVENT_CONNECTOR_CATEGORY_VOC', 'ec_categories');
+define('EVENT_CONNECTOR_TARGET_GROUP_VOC', 'ec_target_groups');
+
+/**
  * Implements hook_help().
  */
 function event_connector_help($path, $arg) {
@@ -23,6 +30,7 @@ function event_connector_menu() {
     'description' => 'Settings for event field mappings.',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('event_connector_mapping'),
+    'file' => 'event_connector.admin.inc',
     'access arguments' => array('administer event connector'),
   );
   $items['admin/structure/event_connector/settings'] = array(
@@ -31,6 +39,7 @@ function event_connector_menu() {
     'page callback' => 'drupal_get_form',
     'page arguments' => array('event_connector_settings'),
     'access arguments' => array('administer event connector'),
+    'file' => 'event_connector.admin.inc',
     'type' => MENU_LOCAL_TASK,
   );
   $items['admin/structure/event_connector/lists'] = array(
@@ -39,6 +48,7 @@ function event_connector_menu() {
     'page callback' => 'drupal_get_form',
     'page arguments' => array('event_connector_list_page'),
     'access arguments' => array('administer event connector'),
+    'file' => 'event_connector.admin.inc',
     'type' => MENU_LOCAL_TASK,
   );
   $items['admin/structure/event_connector/general'] = array(
@@ -59,91 +69,6 @@ function event_connector_permission() {
         array('context' => 'event_connector')),
     ),
   );
-}
-
-/**
- * Module field mapping settings form.
- */
-function event_connector_mapping() {
-  $form = array();
-
-  $our_event_type = variable_get('event_connector_type', '0');
-
-  $types = node_type_get_types();
-  $content_types[0] = t('Choose');
-  foreach ($types as $type) {
-    $content_types[$type->type] = $type->name;
-  }
-  $form['event_connector_type'] = array(
-    '#type' => 'select',
-    '#title' => t('Event content type'),
-    '#options' => $content_types,
-    '#default_value' => $our_event_type,
-    '#description' => t('Select your event content type to map.'),
-    '#disabled' => $our_event_type == '0' ? FALSE : TRUE,
-  );
-
-  if ($our_event_type != '0') {
-    $fields = field_info_instances('node', $our_event_type);
-
-    $items[0] = t('No mapping');
-    $items['title'] = $types[$our_event_type]->title_label;
-    foreach ($fields as $key => $value) {
-      // dpm($key);
-      if ($value['widget']['type'] == 'date_popup') {
-        $items[$key . '-value-date'] = $value['label'] . ':value';
-        $items[$key . '-value2-date'] = $value['label'] . ':value2';
-      }
-      elseif ($value['widget']['module'] == 'taxonomy') {
-        $items[$key . '-tid-term'] = $value['label'];
-      }
-      elseif ($value['widget']['module'] == 'image') {
-        $items[$key . '-fid-image'] = $value['label'];
-        $items[$key . '-alt'] = $value['label'] . ':alt';
-      }
-      else {
-        $items[$key] = $value['label'];
-      }
-    }
-    $items['published'] = t('Published');
-
-    $defs = variable_get('event_connector_mappings', array());
-    event_connector_field_mappings($form, $items, $defs);
-  }
-
-  $form['submit'] = array(
-    '#type' => 'submit',
-    '#value' => t('Save'),
-  );
-
-  return $form;
-}
-
-/**
- * Implements hook_submit().
- */
-function event_connector_mapping_submit($form, &$form_state) {
-  $values = $form_state['values'];
-  if ($values['op'] == $values['submit']) {
-    $res = array();
-    foreach ($values as $level => $arr) {
-      if ($level == 'event_connector_type') {
-        variable_set('event_connector_type', $arr);
-        continue;
-      }
-      if (strpos($level, 'level_') === FALSE) {
-        continue;
-      }
-      $res_inner = array();
-      foreach ($arr as $key => $value) {
-        if (strpos($key, 'event_connector') === 0 && !empty($value)) {
-          $res_inner[$key] = $value;
-        }
-      }
-      $res[$level] = $res_inner;
-    }
-    variable_set('event_connector_mappings', $res);
-  }
 }
 
 /**
@@ -195,24 +120,6 @@ function event_connector_field_mappings(&$form, $items, $defs) {
               '#default_value' => isset($defs[$level]['event_connector_' . $caption]) ? $defs[$level]['event_connector_' . $caption] : '',
               '#options' => $items,
             );
-            // $current_item = current($field);
-            // if (is_object($current_item)) {
-            //   $form[$level]['sub_' . $caption] = array(
-            //     '#type' => 'fieldset',
-            //     '#collapsible' => FALSE,
-            //     '#collapsed' => FALSE,
-            //   );
-            //
-            //   foreach ($current_item as $a => $b) {
-            //     $title = ucfirst(str_replace('_', ' ', $a));
-            //     $form[$level]['sub_' . $caption]['event_connector_' . $a] = array(
-            //       '#type' => 'select',
-            //       '#title' => $title,
-            //       '#default_value' => isset($defs['event_connector_' . $a]) ? $defs['event_connector_' . $a] : '',
-            //       '#options' => $items,
-            //     );
-            //   }
-            // }
           }
         }
       }
@@ -220,51 +127,6 @@ function event_connector_field_mappings(&$form, $items, $defs) {
   }
 
   return $form;
-}
-
-/**
- * Module settings form.
- */
-function event_connector_settings() {
-  $form = array();
-
-  $form['event_connector_apiurl'] = array(
-    '#type' => 'textfield',
-    '#title' => t('URL to API'),
-    '#default_value' => variable_get('event_connector_apiurl', ''),
-    '#description' => t('URL to Event Calendar API.'),
-    '#required' => TRUE,
-  );
-
-  $form['event_connector_apikey'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Apikey'),
-    '#default_value' => variable_get('event_connector_apikey', ''),
-    '#description' => t('Apikey to Event Calendar API.'),
-    '#required' => TRUE,
-  );
-
-  $form['event_connector_test'] = array(
-    '#type' => 'checkbox',
-    '#title' => t('Test content.'),
-    '#default_value' => variable_get('event_connector_test', FALSE),
-  );
-
-  $form['event_local_test'] = array(
-    '#type' => 'checkbox',
-    '#title' => t('Test content locally.'),
-    '#description' => t('When checked no content is sended. Query is printed to screen.'),
-    '#default_value' => variable_get('event_local_test', TRUE),
-  );
-
-  $form['event_conn_log'] = array(
-    '#type' => 'checkbox',
-    '#title' => t('Log messages.'),
-    '#description' => t('Send message log for debug reasons.'),
-    '#default_value' => variable_get('event_conn_log', FALSE),
-  );
-
-  return system_settings_form($form);
 }
 
 /**
@@ -317,117 +179,6 @@ function _event_connector_send_to_calendar($node) {
   else {
     $been_here = 'Processed!';
   }
-
-  $example_data = '{
-	"apikey" : "...your api key...",
-	"languages" : ["fi","en"],
-	"test" : "true",
-	"data" : [
-		{
-			"basicInfo" : {
-				"title" : {
-					"fi" : "Esimerkki Otsikko",
-					"en" : "Example title"
-				},
-				"published" : {
-					"fi" : "1",
-					"en" : "1"
-				},
-				"description" : {
-					"fi" : "Esimerkki tapahtuma",
-					"en" : "Example event"
-				},
-				"price" : "10",
-				"event_is_free" : "0",
-				"event_is_accessible" : "1",
-				"event_is_all_ages" : "1",
-				"buy_ticket_link" : "buy_ticket_link",
-				"buy_ticket_text" : {
-					"fi" : "http://google.com",
-					"en" : "http://google.com"
-				},
-				"categories" : "1,2",
-				"tourist_areas" : "1,2",
-				"target_groups" : "1,2"
-			},
-			"contactInformation" : {
-				"organizer_name" : "Example organizer",
-				"phone" : "1234567",
-				"email" : "example@example.com",
-				"street_address" : "Example street",
-				"zip_code" : "80110",
-				"city" : "JOENSUU",
-				"map" : {
-					"lat":"62.603494526536934",
-					"lng":"29.771407378369076"
-				},
-				"homepage" : "http://google.com",
-				"event_location" : {
-					"fi" : "Satunnainen esimerkkisijainti",
-					"en" : "Random event location"
-				}
-			},
-			"dates" : [{
-					"start_datetime" : "2016-12-10",
-					"event_repeat" : "monthly",
-					"repeat_amount" : "2",
-					"end_datetime" : "2017-01-01"
-				}
-			],
-			"images" : [{
-					"image" : {
-						"fi" : {
-							"data" : "iVBORw0KGgoAAAANSUhEUgAAAGQAAAAeAQMAAADglSmwAAAABlBMVEX///8AAP94wDzzAAAAW0lEQVQYlWNgIBr8AxGMBxgMwLwDUBIrL7F/2tkDBz5AeH+MJW7nJRycAZWTY7idY3CYB8rjkQfx/sDkDEA8mCnGhiB9PVDbE+fdzj344IcB3D08KK5D5Q0rAAAP8STZfzqOdwAAAABJRU5ErkJggg==",
-							"filename" : "example.png"
-						},
-						"en" : {
-							"data" : "iVBORw0KGgoAAAANSUhEUgAAAGQAAAAeAQMAAADglSmwAAAABlBMVEX///8AAP94wDzzAAAAW0lEQVQYlWNgIBr8AxGMBxgMwLwDUBIrL7F/2tkDBz5AeH+MJW7nJRycAZWTY7idY3CYB8rjkQfx/sDkDEA8mCnGhiB9PVDbE+fdzj344IcB3D08KK5D5Q0rAAAP8STZfzqOdwAAAABJRU5ErkJggg==",
-							"filename" : "example.png"
-						}
-					},
-					"alt_text" : {
-						"fi" : "Esimerkkikuva",
-						"en" : "Example image"
-					}
-				}
-			],
-			"videos" : [{
-					"video" : {
-						"fi" : "html embed video",
-						"en" : "html embed video"
-					}
-				}
-			],
-			"links" : [{
-					"link_title" : {
-						"fi" : "Esimerkki linkki",
-						"en" : "Example link"
-					},
-					"link_url" : {
-						"fi" : "http://google.com",
-						"en" : "http://google.com"
-					}
-				}
-			],
-			"attachments" : [{
-					"event_file_title" : {
-						"fi" : "event_file_title",
-						"en" : "event_file_title"
-					},
-					"event_file" : {
-						"fi" : {
-							"data" : "JVBERi0xLjMgCjEgMCBvYmoKPDwKL1BhZ2VzIDIgMCBSCi9UeXBlIC9DYXRhbG9nCj4+CmVuZG9iagoyIDAgb2JqCjw8Ci9UeXBlIC9QYWdlcwovS2lkcyBbIDMgMCBSIF0KL0NvdW50IDEKPj4KZW5kb2JqCjMgMCBvYmoKPDwKL1R5cGUgL1BhZ2UKL1BhcmVudCAyIDAgUgovUmVzb3VyY2VzIDw8Ci9YT2JqZWN0IDw8IC9JbTAgOCAwIFIgPj4KL1Byb2NTZXQgNiAwIFIgPj4KL01lZGlhQm94IFswIDAgMTAwIDMwXQovQ3JvcEJveCBbMCAwIDEwMCAzMF0KL0NvbnRlbnRzIDQgMCBSCi9UaHVtYiAxMSAwIFIKPj4KZW5kb2JqCjQgMCBvYmoKPDwKL0xlbmd0aCA1IDAgUgo+PgpzdHJlYW0KcQoxMDAgMCAwIDMwIDAgMCBjbQovSW0wIERvClEKCmVuZHN0cmVhbQplbmRvYmoKNSAwIG9iagozMAplbmRvYmoKNiAwIG9iagpbIC9QREYgL1RleHQgL0ltYWdlSSBdCmVuZG9iago3IDAgb2JqCjw8Cj4+CmVuZG9iago4IDAgb2JqCjw8Ci9UeXBlIC9YT2JqZWN0Ci9TdWJ0eXBlIC9JbWFnZQovTmFtZSAvSW0wCi9GaWx0ZXIgWyAvRmxhdGVEZWNvZGUgXQovV2lkdGggMTAwCi9IZWlnaHQgMzAKL0NvbG9yU3BhY2UgMTAgMCBSCi9CaXRzUGVyQ29tcG9uZW50IDgKL0xlbmd0aCA5IDAgUgo+PgpzdHJlYW0KeNrtUosKwCAIzP//6bEevjZSYbAN7ggzKfW8WgOyoIHC9WsoflTt6eM1htPtnB6dp+6QzEh2H9nVWLdnNjFqEadSm43kuBvtbQ1H9MZm58uNDW7bGpZ/lQe/DHmUNecRL9lDPdJ/kklr4R0J9a9IO1nNc308keX9GgAAAMC/cADQ/gDzCmVuZHN0cmVhbQplbmRvYmoKOSAwIG9iagoxMzIKZW5kb2JqCjEwIDAgb2JqClsgL0luZGV4ZWQgL0RldmljZVJHQiAxIDEzIDAgUiBdCmVuZG9iagoxMSAwIG9iago8PAovRmlsdGVyIFsgL0ZsYXRlRGVjb2RlIF0KL1dpZHRoIDEwMAovSGVpZ2h0IDMwCi9Db2xvclNwYWNlIDEwIDAgUgovQml0c1BlckNvbXBvbmVudCA4Ci9MZW5ndGggMTIgMCBSCj4+CnN0cmVhbQp42u1SiwrAIAjM///psR6+NlJhsA3uCDMp9bxaA7KggcL1ayh+VO3p4zWG0+2cHp2n7pDMSHYf2dVYt2c2MWoRp1KbjeS4G+1tDUf0xmbny40Nbtsaln+VB78MeZQ15xEv2UM90n+SSWvhHQn1r0g7Wc1zfTyR5f0aAAAAwL9wAND+APMKZW5kc3RyZWFtCmVuZG9iagoxMiAwIG9iagoxMzIKZW5kb2JqCjEzIDAgb2JqCjw8Ci9MZW5ndGggMTQgMCBSCj4+CnN0cmVhbQr///8AAP8KZW5kc3RyZWFtCmVuZG9iagoxNCAwIG9iago2CmVuZG9iagoxNSAwIG9iago8PAo+PgplbmRvYmoKMTYgMCBvYmoKNgplbmRvYmoKMTcgMCBvYmoKPDwKL1RpdGxlIChleGFtcGxlKQovQ3JlYXRpb25EYXRlIChEOjIwMTYwOTI3MTQxMDMwKQovTW9kRGF0ZSAoRDoyMDE2MDkyNzE0MTAzMCkKL1Byb2R1Y2VyIChJbWFnZU1hZ2ljayA2LjkuMS0yIFExNiB4NjQgMjAxNS0wNC0xNCBodHRwOi8vd3d3LmltYWdlbWFnaWNrLm9yZykKPj4KZW5kb2JqCnhyZWYKMCAxOAowMDAwMDAwMDAwIDY1NTM1IGYgCjAwMDAwMDAwMTAgMDAwMDAgbiAKMDAwMDAwMDA1OSAwMDAwMCBuIAowMDAwMDAwMTE4IDAwMDAwIG4gCjAwMDAwMDAyOTggMDAwMDAgbiAKMDAwMDAwMDM4MSAwMDAwMCBuIAowMDAwMDAwMzk5IDAwMDAwIG4gCjAwMDAwMDA0MzcgMDAwMDAgbiAKMDAwMDAwMDQ1OCAwMDAwMCBuIAowMDAwMDAwNzcxIDAwMDAwIG4gCjAwMDAwMDA3OTAgMDAwMDAgbiAKMDAwMDAwMDgzOSAwMDAwMCBuIAowMDAwMDAxMTEyIDAwMDAwIG4gCjAwMDAwMDExMzIgMDAwMDAgbiAKMDAwMDAwMTE5MyAwMDAwMCBuIAowMDAwMDAxMjExIDAwMDAwIG4gCjAwMDAwMDEyMzMgMDAwMDAgbiAKMDAwMDAwMTI1MSAwMDAwMCBuIAp0cmFpbGVyCjw8Ci9TaXplIDE4Ci9JbmZvIDE3IDAgUgovUm9vdCAxIDAgUgovSUQgWzxlMjAwMDYzZmUxZGNjMjhmNWU2YTM5ZTJkYWMwMTQ4Y2VlZDlhNjI1YjM5MTU2ZjdlN2RjODc3NTkyY2Q3ODhkPiA8ZTIwMDA2M2ZlMWRjYzI4ZjVlNmEzOWUyZGFjMDE0OGNlZWQ5YTYyNWIzOTE1NmY3ZTdkYzg3NzU5MmNkNzg4ZD5dCj4+CnN0YXJ0eHJlZgoxNDI5CiUlRU9GCg==",
-							"filename" : "Example.pdf"
-						},
-						"en" : {
-							"data" : "JVBERi0xLjMgCjEgMCBvYmoKPDwKL1BhZ2VzIDIgMCBSCi9UeXBlIC9DYXRhbG9nCj4+CmVuZG9iagoyIDAgb2JqCjw8Ci9UeXBlIC9QYWdlcwovS2lkcyBbIDMgMCBSIF0KL0NvdW50IDEKPj4KZW5kb2JqCjMgMCBvYmoKPDwKL1R5cGUgL1BhZ2UKL1BhcmVudCAyIDAgUgovUmVzb3VyY2VzIDw8Ci9YT2JqZWN0IDw8IC9JbTAgOCAwIFIgPj4KL1Byb2NTZXQgNiAwIFIgPj4KL01lZGlhQm94IFswIDAgMTAwIDMwXQovQ3JvcEJveCBbMCAwIDEwMCAzMF0KL0NvbnRlbnRzIDQgMCBSCi9UaHVtYiAxMSAwIFIKPj4KZW5kb2JqCjQgMCBvYmoKPDwKL0xlbmd0aCA1IDAgUgo+PgpzdHJlYW0KcQoxMDAgMCAwIDMwIDAgMCBjbQovSW0wIERvClEKCmVuZHN0cmVhbQplbmRvYmoKNSAwIG9iagozMAplbmRvYmoKNiAwIG9iagpbIC9QREYgL1RleHQgL0ltYWdlSSBdCmVuZG9iago3IDAgb2JqCjw8Cj4+CmVuZG9iago4IDAgb2JqCjw8Ci9UeXBlIC9YT2JqZWN0Ci9TdWJ0eXBlIC9JbWFnZQovTmFtZSAvSW0wCi9GaWx0ZXIgWyAvRmxhdGVEZWNvZGUgXQovV2lkdGggMTAwCi9IZWlnaHQgMzAKL0NvbG9yU3BhY2UgMTAgMCBSCi9CaXRzUGVyQ29tcG9uZW50IDgKL0xlbmd0aCA5IDAgUgo+PgpzdHJlYW0KeNrtUosKwCAIzP//6bEevjZSYbAN7ggzKfW8WgOyoIHC9WsoflTt6eM1htPtnB6dp+6QzEh2H9nVWLdnNjFqEadSm43kuBvtbQ1H9MZm58uNDW7bGpZ/lQe/DHmUNecRL9lDPdJ/kklr4R0J9a9IO1nNc308keX9GgAAAMC/cADQ/gDzCmVuZHN0cmVhbQplbmRvYmoKOSAwIG9iagoxMzIKZW5kb2JqCjEwIDAgb2JqClsgL0luZGV4ZWQgL0RldmljZVJHQiAxIDEzIDAgUiBdCmVuZG9iagoxMSAwIG9iago8PAovRmlsdGVyIFsgL0ZsYXRlRGVjb2RlIF0KL1dpZHRoIDEwMAovSGVpZ2h0IDMwCi9Db2xvclNwYWNlIDEwIDAgUgovQml0c1BlckNvbXBvbmVudCA4Ci9MZW5ndGggMTIgMCBSCj4+CnN0cmVhbQp42u1SiwrAIAjM///psR6+NlJhsA3uCDMp9bxaA7KggcL1ayh+VO3p4zWG0+2cHp2n7pDMSHYf2dVYt2c2MWoRp1KbjeS4G+1tDUf0xmbny40Nbtsaln+VB78MeZQ15xEv2UM90n+SSWvhHQn1r0g7Wc1zfTyR5f0aAAAAwL9wAND+APMKZW5kc3RyZWFtCmVuZG9iagoxMiAwIG9iagoxMzIKZW5kb2JqCjEzIDAgb2JqCjw8Ci9MZW5ndGggMTQgMCBSCj4+CnN0cmVhbQr///8AAP8KZW5kc3RyZWFtCmVuZG9iagoxNCAwIG9iago2CmVuZG9iagoxNSAwIG9iago8PAo+PgplbmRvYmoKMTYgMCBvYmoKNgplbmRvYmoKMTcgMCBvYmoKPDwKL1RpdGxlIChleGFtcGxlKQovQ3JlYXRpb25EYXRlIChEOjIwMTYwOTI3MTQxMDMwKQovTW9kRGF0ZSAoRDoyMDE2MDkyNzE0MTAzMCkKL1Byb2R1Y2VyIChJbWFnZU1hZ2ljayA2LjkuMS0yIFExNiB4NjQgMjAxNS0wNC0xNCBodHRwOi8vd3d3LmltYWdlbWFnaWNrLm9yZykKPj4KZW5kb2JqCnhyZWYKMCAxOAowMDAwMDAwMDAwIDY1NTM1IGYgCjAwMDAwMDAwMTAgMDAwMDAgbiAKMDAwMDAwMDA1OSAwMDAwMCBuIAowMDAwMDAwMTE4IDAwMDAwIG4gCjAwMDAwMDAyOTggMDAwMDAgbiAKMDAwMDAwMDM4MSAwMDAwMCBuIAowMDAwMDAwMzk5IDAwMDAwIG4gCjAwMDAwMDA0MzcgMDAwMDAgbiAKMDAwMDAwMDQ1OCAwMDAwMCBuIAowMDAwMDAwNzcxIDAwMDAwIG4gCjAwMDAwMDA3OTAgMDAwMDAgbiAKMDAwMDAwMDgzOSAwMDAwMCBuIAowMDAwMDAxMTEyIDAwMDAwIG4gCjAwMDAwMDExMzIgMDAwMDAgbiAKMDAwMDAwMTE5MyAwMDAwMCBuIAowMDAwMDAxMjExIDAwMDAwIG4gCjAwMDAwMDEyMzMgMDAwMDAgbiAKMDAwMDAwMTI1MSAwMDAwMCBuIAp0cmFpbGVyCjw8Ci9TaXplIDE4Ci9JbmZvIDE3IDAgUgovUm9vdCAxIDAgUgovSUQgWzxlMjAwMDYzZmUxZGNjMjhmNWU2YTM5ZTJkYWMwMTQ4Y2VlZDlhNjI1YjM5MTU2ZjdlN2RjODc3NTkyY2Q3ODhkPiA8ZTIwMDA2M2ZlMWRjYzI4ZjVlNmEzOWUyZGFjMDE0OGNlZWQ5YTYyNWIzOTE1NmY3ZTdkYzg3NzU5MmNkNzg4ZD5dCj4+CnN0YXJ0eHJlZgoxNDI5CiUlRU9GCg==",
-							"filename" : "Example.pdf"
-						}
-					}
-				}
-			]
-		}
-	]}';
 
   $map = variable_get('event_connector_mappings', array());
 
@@ -661,53 +412,48 @@ function event_connector_get_list($list) {
 }
 
 /**
- * Page to show list get from api.
+ * Clear and update taxonomy.
+ *
+ * @param string $voc_name
+ *    Vocabulary name to update.
+ * @param string $api_path
+ *    Path extension where values are fetch.
  */
-function event_connector_list_page() {
-  $area_list = event_connector_get_list('areas/list');
+function event_connector_update_taxonomy($voc_name, $api_path) {
+  $list = event_connector_get_list($api_path);
+  $myvoc = taxonomy_vocabulary_machine_name_load($voc_name);
+  $tree = taxonomy_get_tree($myvoc->vid);
+  // Delete all current termms.
+  foreach ($tree as $term) {
+    taxonomy_term_delete($term->tid);
+  }
+  // Add new terms.
+  foreach ($list as $key => $value) {
+    $term = new stdClass();
+    $term->vid = $myvoc->vid;
+    $term->name = $value;
+    $term->field_caterory_term_id[LANGUAGE_NONE][0]['value'] = $key;
+    taxonomy_term_save($term);
+  }
+}
+
+/**
+ * Return list fetch from api.
+ *
+ * @param string $api_path
+ *    Path extension where values are fetch.
+ *
+ * @return array
+ *    Category list.
+ */
+function _event_connector_fetch_list($api_path) {
+  $list = event_connector_get_list($api_path);
   $rows = array();
-  foreach ($area_list as $key => $value) {
+  foreach ($list as $key => $value) {
     $rows[] = array(
       array('data' => $key),
-      array('data' => $value)
+      array('data' => $value),
     );
   }
-  $header = array(t('Id'), t('Areas'));
-  $form['areas'] = array(
-    '#type' => 'item',
-    '#title' => t('Areas'),
-    '#markup' => theme('table', array('header' => $header, 'rows' => $rows)),
-  );
-
-  $category_list = event_connector_get_list('categories/list');
-  $rows = array();
-  foreach ($category_list as $key => $value) {
-    $rows[] = array(
-      array('data' => $key),
-      array('data' => $value)
-    );
-  }
-  $header = array(t('Id'), t('Categories'));
-  $form['categories'] = array(
-    '#type' => 'item',
-    '#title' => t('Categories'),
-    '#markup' => theme('table', array('header' => $header, 'rows' => $rows)),
-  );
-
-  $target_list = event_connector_get_list('targetgroups/list');
-  $rows = array();
-  foreach ($target_list as $key => $value) {
-    $rows[] = array(
-      array('data' => $key),
-      array('data' => $value)
-    );
-  }
-  $header = array(t('Id'), t('Target groups'));
-  $form['targetgroups'] = array(
-    '#type' => 'item',
-    '#title' => t('Target groups'),
-    '#markup' => theme('table', array('header' => $header, 'rows' => $rows)),
-  );
-
-  return $form;
+  return $rows;
 }

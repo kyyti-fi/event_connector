@@ -1,0 +1,82 @@
+<?php
+
+/**
+ * @file
+ * Event connector module installation functions.
+ */
+
+/**
+ * Implements hook_install().
+ */
+function event_connector_install() {
+  event_connector_taxonomy_create();
+}
+
+/**
+ * Create needed taxonomies.
+ */
+function event_connector_update_7001() {
+  event_connector_taxonomy_create();
+}
+
+/**
+ * Create taxonomies, fields and field instances.
+ */
+function event_connector_taxonomy_create() {
+
+  // Create field for event api id.
+  if (field_info_field(field_caterory_term_id) === NULL) {
+    $array_fields = array(
+      'field_caterory_term_id' => array(
+        'field_name' => 'field_caterory_term_id',
+        'type' => 'text',
+        'module' => 'text',
+        'active' => '1',
+        'cardinality' => '1',
+        'settings' => array('max_length' => 10),
+      ),
+    );
+    foreach ($array_fields as $field) {
+      field_create_field($field);
+    }
+  }
+  _event_connector_create_list_taxonomy(EVENT_CONNECTOR_AREA_VOC, 'Event API Areas');
+  _event_connector_create_list_taxonomy(EVENT_CONNECTOR_CATEGORY_VOC, 'Event API Categories');
+  _event_connector_create_list_taxonomy(EVENT_CONNECTOR_TARGET_GROUP_VOC, 'Event API Target groups');
+}
+
+/**
+ * Create taxonomy.
+ *
+ * @param string $voc_type
+ *   Type list to tcreae taxonomy.
+ * @param string $voc_name
+ *   Vocabulary name.
+ */
+function _event_connector_create_list_taxonomy($voc_type, $voc_name) {
+  // Crete target group taxonomy.
+  if (taxonomy_vocabulary_machine_name_load($voc_type) == FALSE) {
+    $voc = new stdClass();
+    $voc->name = $voc_name;
+    $voc->machine_name = $voc_type;
+    $voc->hierarchy = 0;
+    taxonomy_vocabulary_save($voc);
+    // Instance data.
+    $t = get_t();
+    $array_instances = array(
+      'field_caterory_term_id' => array(
+        'label' => $t('Id'),
+        'field_name' => 'field_caterory_term_id',
+        'widget' => array(
+          'type' => 'text_textfield',
+        ),
+        'entity_type' => 'taxonomy_term',
+        'bundle' => $voc_type,
+      ),
+    );
+    // Create all the instances for our fields.
+    foreach ($array_instances as $instance) {
+      field_create_instance($instance);
+    }
+  }
+}
