@@ -301,7 +301,8 @@ function _event_connector_fetch_node_field_value($node, $field) {
 
     switch ($type) {
       case 'date':
-        $result = substr($value, 0, 16);
+        $date_str = strtotime($value);
+        $result = date('c', $date_str);
         break;
 
       case 'term':
