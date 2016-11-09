@@ -279,19 +279,7 @@ function _event_connector_fetch_node_field_value($node, $field) {
     $parts[] = NULL;
   }
   list($name, $delta, $type) = $parts;
-  
-  if ($name == 'field_ulkoinen_tyyppi') {
-  dpm($node, 'node');
-  dpm($delta, 'delta');
-  dpm($type, 'type');
-  
-    $wrapper = entity_metadata_wrapper('node', $node);
-    dpm($wrapper->field_ulkoinen_tyyppi->value(), 'field_ulkoinen_tyyppi');
-    
-  
-  
-  }
-  
+
   $result = '';
   $lang = isset($node->language) ? $node->language : LANGUAGE_NONE;
 
@@ -319,14 +307,23 @@ function _event_connector_fetch_node_field_value($node, $field) {
         break;
 
       case 'term':
-
-        $term = taxonomy_term_load($value);
-        $field_caterory_term_id = field_get_items('taxonomy_term', $term, 'field_caterory_term_id');
-        if (!empty($field_caterory_term_id)) {
-          $result = current($field_caterory_term_id)['value'];
-        }
-        else {
-          $result = $term->name;
+        $result = '';
+        $wrapper = entity_metadata_wrapper('node', $node);
+        $term_value = $wrapper->{$name}->value();
+        if (isset($term_value)) {
+          if (is_object($term_value)) {
+            $term_value = array($term_value);
+          }
+          $term_result = '';
+          foreach ($term_value as $val) {
+            if (isset($val->field_caterory_term_id)) {
+              $term_result .= $val->field_caterory_term_id[LANGUAGE_NONE][0]['value'] . ', ';
+            }
+            else {
+              $term_result .= $val->name . ', ';
+            }
+          }
+          $result = substr($term_result, 0, -2);
         }
         drupal_alter('event_connector_term', $name, $value, $result);
         break;
