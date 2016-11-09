@@ -306,6 +306,7 @@ function _event_connector_fetch_node_field_value($node, $field) {
 
       case 'term':
         $result = taxonomy_term_load($value)->name;
+        drupal_alter('event_connector_term', $name, $value, $result);
         break;
 
       case 'image':
