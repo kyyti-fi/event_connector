@@ -27,20 +27,20 @@ function event_connector_mapping() {
   );
 
   if ($our_event_type != '0') {
+    $field_types = field_read_fields(array('bundle' => $our_event_type));
     $fields = field_info_instances('node', $our_event_type);
 
     $items[0] = t('No mapping');
     $items['title'] = $types[$our_event_type]->title_label;
     foreach ($fields as $key => $value) {
-      // dpm($key);
       if ($value['widget']['type'] == 'date_popup') {
         $items[$key . '-value-date'] = $value['label'] . ':value';
         $items[$key . '-value2-date'] = $value['label'] . ':value2';
       }
-      elseif ($value['widget']['module'] == 'taxonomy') {
+      elseif ($field_types[$key]['type'] == 'taxonomy_term_reference') {
         $items[$key . '-tid-term'] = $value['label'];
       }
-      elseif ($value['widget']['module'] == 'image') {
+      elseif ($field_types[$key]['type'] == 'image') {
         $items[$key . '-fid-image'] = $value['label'];
         $items[$key . '-alt'] = $value['label'] . ':alt';
       }
