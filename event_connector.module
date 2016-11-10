@@ -311,6 +311,9 @@ function _event_connector_fetch_node_field_value($node, $field) {
         $result = '';
         $wrapper = entity_metadata_wrapper('node', $node);
         $term_value = $wrapper->{$name}->value();
+        if (module_exists('devel')) {
+          dd($term_value, 'term value');
+        }
         if (isset($term_value)) {
           if (is_object($term_value)) {
             $term_value = array($term_value);
