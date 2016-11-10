@@ -302,8 +302,9 @@ function _event_connector_fetch_node_field_value($node, $field) {
 
     switch ($type) {
       case 'date':
-        $date_str = strtotime($value);
-        $result = date('c', $date_str);
+        // Time in Drupal is UTC.
+        $timestamp = strtotime($value . '+00:00');
+        $result = date('c', $timestamp);
         break;
 
       case 'term':
