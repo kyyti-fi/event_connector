@@ -183,6 +183,7 @@ function _event_connector_send_to_calendar($node) {
   $map = variable_get('event_connector_mappings', array());
 
   $data = array();
+  $rows = array();
   $data['apikey'] = variable_get('event_connector_apikey', '');
   $lang = isset($node->language) ? $node->language : LANGUAGE_NONE;
   $data['languages'] = array($lang);
@@ -197,8 +198,12 @@ function _event_connector_send_to_calendar($node) {
     $block = array();
     foreach ($arr as $key => $value) {
       $field_name = substr($key, 16);
-      $field_value = _event_connector_fetch_node_field_value($node, $value);
-
+      if ($key == 'event_connector_map') {
+        $field_value = _event_connector_fetch_coordinates($node, $value, $block);
+      }
+      else {
+        $field_value = _event_connector_fetch_node_field_value($node, $value);
+      }
       if ($field_value !== NULL) {
         $block[$field_name] = $field_value;
       }
@@ -336,8 +341,8 @@ function _event_connector_fetch_node_field_value($node, $field) {
         $image_str = base64_encode($img);
         $result = array(
           $lang => array(
-            'filename' => $file->filename,
             'data' => $image_str,
+            'filename' => $file->filename,
           ),
         );
         break;
@@ -477,4 +482,64 @@ function _event_connector_fetch_list($api_path) {
     );
   }
   return $rows;
+}
+
+/**
+ * Create map coordinates from already fetched data.
+ *
+ * ToDo: This must done better way, now trusts curren query structure.
+ *
+ * @param object $node
+ *    Node to save.
+ * @param string $value
+ *    Field name to get data.
+ * @param array $data
+ *    Already fetched data.
+ *
+ * @return string
+ *    Value for field or null if target not set.
+ */
+function _event_connector_fetch_coordinates($node, $value, $data) {
+  $address = '';
+  if (isset($data['street_address'])) {
+    $address .= $data['street_address'] . ',';
+  }
+  if (isset($data['zip_code'])) {
+    $address .= $data['zip_code'] . ',';
+  }
+  if (isset($data['city'])) {
+    $address .= $data['city'];
+  }
+  $map_address = rtrim($address, ',');
+  if (empty($map_address)) {
+    $map_address = _event_connector_fetch_node_field_value($node, $value);
+  }
+  if (empty($map_address)) {
+    return NULL;
+  }
+  $send_address = str_replace(' ', '+', $map_address);
+  $url = 'https://maps.googleapis.com/maps/api/geocode/json?address=';
+  $url .= $send_address;
+
+  $response = drupal_http_request($url);
+
+  if ($response->code != 200) {
+    watchdog('event connector', 'Return code from map request @code, error: @msg', array(
+      '@code' => $response->code,
+      '@msg' => $response->data,
+    ));
+  }
+
+  $result = json_decode($response->data);
+  if ($result->status == 'OK') {
+    $res = current($result->results);
+    $ret = array(
+      'lat' => (string) $res->geometry->location->lat,
+      'lng' => (string) $res->geometry->location->lng,
+    );
+    return $ret;
+  }
+  else {
+    return NULL;
+  }
 }
