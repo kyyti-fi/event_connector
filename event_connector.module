@@ -183,6 +183,7 @@ function _event_connector_send_to_calendar($node) {
   if ($node->status != 1) {
     watchdog('Event Conn', 'Event node (@nid) is not published, but tried to send to API.',
         array('@nid' => $node->nid), WATCHDOG_WARNING);
+    return;
   }
 
   $map = variable_get('event_connector_mappings', array());
