@@ -145,6 +145,10 @@ function event_connector_node_insert($node) {
  * Implements hook_update().
  */
 function event_connector_node_update($node) {
+  if ($node->status == $node->original->status) {
+    return;
+  }
+
   $our_event_type = variable_get('event_connector_type', '');
   if ($our_event_type == $node->type &&
       $node->status == 1 &&
@@ -157,6 +161,10 @@ function event_connector_node_update($node) {
  * Implements hook_workbench_moderation_transition().
  */
 function event_connector_workbench_moderation_transition($node, $previous_state, $new_state) {
+  if ($previous_state == $new_state) {
+    return;
+  }
+
   $our_event_type = variable_get('event_connector_type', '');
   if ($our_event_type == $node->type &&
       $node->field_ulkoiseen_tapahtumakalente[LANGUAGE_NONE][0]['value'] == 1 &&
