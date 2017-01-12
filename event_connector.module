@@ -180,18 +180,22 @@ function event_connector_workbench_moderation_transition($node, $previous_state,
  *    Event node.
  */
 function _event_connector_send_to_calendar($node) {
-  $been_here = &drupal_static(__FUNCTION__);
+  if ($node->status != 1) {
+    watchdog('Event Conn', 'Event node (@nid) is not published, but tried to send to API.',
+        array('@nid' => $node->nid), WATCHDOG_WARNING);
+    return;
+  }
+  if ($node->workbench_moderation['current']->published != 1 ) {
+    watchdog('Event Conn', 'Event node (@nid) is not published (Workbench Moderation), but node published is TRUE.',
+        array('@nid' => $node->nid), WATCHDOG_WARNING);
+  }
+
+  $been_here = &drupal_static(__FUNCTION__ . $node->nid);
   if (isset($been_here)) {
     return;
   }
   else {
     $been_here = 'Processed!';
-  }
-
-  if ($node->status != 1) {
-    watchdog('Event Conn', 'Event node (@nid) is not published, but tried to send to API.',
-        array('@nid' => $node->nid), WATCHDOG_WARNING);
-    return;
   }
 
   $map = variable_get('event_connector_mappings', array());
@@ -234,7 +238,6 @@ function _event_connector_send_to_calendar($node) {
   }
   $data['data'][] = $rows;
 
-  // dpm($data);
   $json_data = json_encode($data);
 
   if (variable_get('event_conn_log', FALSE)) {
@@ -372,7 +375,8 @@ function _event_connector_fetch_node_field_value($node, $field) {
       $result = $node->title;
     }
     elseif ($name == 'published') {
-      if (isset($node->workbench_moderation['current'])) {
+      if (isset($node->workbench_moderation['current']) &&
+          $node->workbench_moderation['current']->published) {
         $result = $node->workbench_moderation['current']->published ? '1' : '0';
       }
       else {
